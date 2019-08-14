@@ -102,7 +102,7 @@ class upload(PyPIRCCommand):
             'content': (os.path.basename(filename),content),
             'filetype': command,
             'pyversion': pyversion,
-            'md5_digest': hashlib.md5(content).hexdigest(),
+            'sha256_digest': hashlib.sha256(content).hexdigest(),
 
             # additional meta-data
             'metadata_version': '1.0',
