@@ -22,8 +22,8 @@ except ImportError:
 from test import support
 from test.support import script_helper
 
-from .test_py_compile import without_source_date_epoch
-from .test_py_compile import SourceDateEpochTestMeta
+from test_py_compile import without_source_date_epoch
+from test_py_compile import SourceDateEpochTestMeta
 
 
 class CompileallTestsBase:
@@ -387,13 +387,15 @@ class CommandLineTestsBase:
 
     def assertRunOK(self, *args, **env_vars):
         rc, out, err = script_helper.assert_python_ok(
-                         *self._get_run_args(args), **env_vars)
+                         *self._get_run_args(args), **env_vars,
+                         __isolated=False)
         self.assertEqual(b'', err)
         return out
 
     def assertRunNotOK(self, *args, **env_vars):
         rc, out, err = script_helper.assert_python_failure(
-                        *self._get_run_args(args), **env_vars)
+                        *self._get_run_args(args), **env_vars,
+                        __isolated=False)
         return rc, out, err
 
     def assertCompiled(self, fn):
