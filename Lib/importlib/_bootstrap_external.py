@@ -1027,6 +1027,10 @@ class SourceFileLoader(FileLoader, SourceLoader):
     def set_data(self, path, data, *, _mode=0o666):
         """Write bytes data to a file."""
         parent, filename = _path_split(path)
+        nocache_marker = _path_join(parent, "nocache")
+        if _path_isfile(nocache_marker):
+            _bootstrap._verbose_message('skipping {!r}, contains `nocache` marker', parent)
+            return
         path_parts = []
         # Figure out what directories are missing.
         while parent and not _path_isdir(parent):
