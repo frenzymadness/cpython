@@ -1,3 +1,4 @@
+import sysconfig
 import textwrap
 import unittest
 from distutils.tests.support import TempdirManager
@@ -64,6 +65,7 @@ unittest.main()
 
 class TestCParser(TempdirManager, unittest.TestCase):
     def setUp(self):
+        self._backup_config_vars = dict(sysconfig._CONFIG_VARS)
         cmd = support.missing_compiler_executable()
         if cmd is not None:
             self.skipTest("The %r command is not found" % cmd)
@@ -75,6 +77,8 @@ class TestCParser(TempdirManager, unittest.TestCase):
 
     def tearDown(self):
         super(TestCParser, self).tearDown()
+        sysconfig._CONFIG_VARS.clear()
+        sysconfig._CONFIG_VARS.update(self._backup_config_vars)
 
     def build_extension(self, grammar_source):
         grammar = parse_string(grammar_source, GrammarParser)
