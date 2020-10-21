@@ -1,7 +1,6 @@
 """Tests for distutils.unixccompiler."""
 import sys
 import unittest
-from copy import copy
 from test.support import run_unittest
 from test.support.os_helper import EnvironmentVarGuard
 
@@ -13,7 +12,7 @@ class UnixCCompilerTestCase(unittest.TestCase):
     def setUp(self):
         self._backup_platform = sys.platform
         self._backup_get_config_var = sysconfig.get_config_var
-        self._backup_config_vars = copy(sysconfig._config_vars)
+        self._backup_config_vars = dict(sysconfig._config_vars)
         class CompilerWrapper(UnixCCompiler):
             def rpath_foo(self):
                 return self.runtime_library_dir_option('/foo')
