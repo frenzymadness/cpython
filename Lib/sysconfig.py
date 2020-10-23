@@ -224,7 +224,7 @@ def _getuserbase():
     return joinuser("~", ".local")
 
 
-def _parse_makefile(filename, vars=None, distutils_compat=False):
+def _parse_makefile(filename, vars=None, keep_unresolved=True):
     """Parse a Makefile-style file.
 
     A dictionary containing name/value pairs is returned.  If an
@@ -326,9 +326,9 @@ def _parse_makefile(filename, vars=None, distutils_compat=False):
                                 done[name] = value
 
             else:
-                # The same function in distutils would not add
-                # unresolved variable to the done dictionary
-                if not distutils_compat:
+                # Adds unresolved variables to the done dict.
+                # This is disabled when called from distutils.sysconfig
+                if keep_unresolved:
                     done[name] = value
                 # bogus variable reference (e.g. "prefix=$/opt/python");
                 # just drop it since we can't deal
