@@ -48,6 +48,45 @@ TICK = "'"
 specialsre = re.compile(r'[][\\()<>@,:;".]')
 escapesre = re.compile(r'[\\"]')
 
+_EMAIL_CONFIG_FILE = "/etc/python/email.cfg"
+
+
+def _use_strict_email_parsing():
+    """Returns True if strict email parsing is not disabled by
+    config file or env variable.
+    """
+    global _cached_strict_addr_parsing
+
+    try:
+        return _cached_strict_addr_parsing
+    except NameError:
+        disabled = bool(os.environ.get("PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING"))
+        if disabled:
+            _cached_strict_addr_parsing = False
+            return _cached_strict_addr_parsing
+
+        try:
+            file = open(_EMAIL_CONFIG_FILE)
+        except FileNotFoundError:
+            pass
+        else:
+            with file:
+                import configparser
+                config = configparser.ConfigParser(
+                    interpolation=None,
+                    comment_prefixes=('#', ),
+
+                )
+                config.read_file(file)
+                disabled = config.getboolean('email_addr_parsing', "PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING", fallback=None)
+
+        if disabled:
+            _cached_strict_addr_parsing = False
+            return _cached_strict_addr_parsing
+
+        _cached_strict_addr_parsing = True
+        return _cached_strict_addr_parsing
+
 
 def _has_surrogates(s):
     """Return True if s contains surrogate-escaped binary data."""
@@ -149,7 +188,7 @@ def _strip_quoted_realnames(addr):
 
 supports_strict_parsing = True
 
-def getaddresses(fieldvalues, *, strict=True):
+def getaddresses(fieldvalues, *, strict=None):
     """Return a list of (REALNAME, EMAIL) or ('','') for each fieldvalue.
 
     When parsing fails for a fieldvalue, a 2-tuple of ('', '') is returned in
@@ -157,6 +196,11 @@ def getaddresses(fieldvalues, *, strict=True):
 
     If strict is true, use a strict parser which rejects malformed inputs.
     """
+
+    # If default is used, it's True unless disabled
+    # by env variable or config file.
+    if strict == None:
+        strict = _use_strict_email_parsing()
 
     # If strict is true, if the resulting list of parsed addresses is greater
     # than the number of fieldvalues in the input list, a parsing error has
@@ -330,7 +374,7 @@ def parsedate_to_datetime(data):
             tzinfo=datetime.timezone(datetime.timedelta(seconds=tz)))
 
 
-def parseaddr(addr, *, strict=True):
+def parseaddr(addr, *, strict=None):
     """
     Parse addr into its constituent realname and email address parts.
 
@@ -339,6 +383,11 @@ def parseaddr(addr, *, strict=True):
 
     If strict is True, use a strict parser which rejects malformed inputs.
     """
+    # If default is used, it's True unless disabled
+    # by env variable or config file.
+    if strict == None:
+        strict = _use_strict_email_parsing()
+
     if not strict:
         addrs = _AddressList(addr).addresslist
         if not addrs:

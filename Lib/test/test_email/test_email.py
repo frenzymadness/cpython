@@ -7,6 +7,9 @@ import time
 import base64
 import unittest
 import textwrap
+import contextlib
+import tempfile
+import os
 
 from io import StringIO, BytesIO
 from itertools import chain
@@ -41,7 +44,7 @@ from email import iterators
 from email import base64mime
 from email import quoprimime
 
-from test.support import unlink, start_threads
+from test.support import unlink, start_threads, EnvironmentVarGuard
 from test.test_email import openfile, TestEmailBase
 
 # These imports are documented to work, but we are testing them using a
@@ -3312,6 +3315,78 @@ Foo
 
         # Test email.utils.supports_strict_parsing attribute
         self.assertEqual(email.utils.supports_strict_parsing, True)
+
+    def test_parsing_errors_strict_disabled_via_env_var(self):
+        address = 'alice@example.org )Alice('
+        empty = ('', '')
+
+        # Delete cached default value to make the function
+        # reload the environment variable provided below.
+        try:
+            del utils._cached_strict_addr_parsing
+        except AttributeError:
+            pass
+
+        # Strict disabled via env variable, old behavior expected
+        with EnvironmentVarGuard() as environ:
+            environ["PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING"] = "1"
+
+            self.assertEqual(utils.getaddresses([address]),
+                             [('', 'alice@example.org'), ('', ''), ('', 'Alice')])
+            self.assertEqual(utils.parseaddr([address]), ('', address))
+
+        # Clear cache again
+        try:
+            del utils._cached_strict_addr_parsing
+        except AttributeError:
+            pass
+
+        # Default strict=True, empty result expected
+        self.assertEqual(utils.getaddresses([address]), [empty])
+        self.assertEqual(utils.parseaddr([address]), empty)
+
+    @contextlib.contextmanager
+    def _email_strict_parsing_conf(self):
+        """Context for the given email strict parsing configured in config file"""
+        old_filename = utils._EMAIL_CONFIG_FILE
+
+        try:
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                filename = os.path.join(tmpdirname, 'conf.cfg')
+                with open(filename, 'w') as file:
+                    file.write('[email_addr_parsing]\n')
+                    file.write('PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING = true')
+                utils._EMAIL_CONFIG_FILE = filename
+                yield
+        finally:
+            utils._EMAIL_CONFIG_FILE = old_filename
+
+    def test_parsing_errors_strict_disabled_via_config_file(self):
+        address = 'alice@example.org )Alice('
+        empty = ('', '')
+
+        # Delete cached default value to make the function
+        # reload the config file provided below.
+        try:
+            del utils._cached_strict_addr_parsing
+        except AttributeError:
+            pass
+
+        # Strict disabled via config file, old results expected
+        with self._email_strict_parsing_conf():
+            self.assertEqual(utils.getaddresses([address]),
+                             [('', 'alice@example.org'), ('', ''), ('', 'Alice')])
+            self.assertEqual(utils.parseaddr([address]), ('', address))
+
+        # Clear cache again
+        try:
+            del utils._cached_strict_addr_parsing
+        except AttributeError:
+            pass
+
+        # Default strict=True, empty result expected
+        self.assertEqual(utils.getaddresses([address]), [empty])
+        self.assertEqual(utils.parseaddr([address]), empty)
 
     def test_getaddresses_nasty(self):
         for addresses, expected in (
