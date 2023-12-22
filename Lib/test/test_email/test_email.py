@@ -3316,7 +3316,7 @@ Foo
         # Test email.utils.supports_strict_parsing attribute
         self.assertEqual(email.utils.supports_strict_parsing, True)
 
-    def test_parsing_errors_strict_disabled_via_env_var(self):
+    def test_parsing_errors_strict_set_via_env_var(self):
         address = 'alice@example.org )Alice('
         empty = ('', '')
 
@@ -3344,6 +3344,20 @@ Foo
         # Default strict=True, empty result expected
         self.assertEqual(utils.getaddresses([address]), [empty])
         self.assertEqual(utils.parseaddr([address]), empty)
+
+        # Clear cache again
+        try:
+            del utils._cached_strict_addr_parsing
+        except AttributeError:
+            pass
+
+        # Empty string in env variable = strict parsing enabled (default)
+        with EnvironmentVarGuard() as environ:
+            environ["PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING"] = ""
+
+            # Default strict=True, empty result expected
+            self.assertEqual(utils.getaddresses([address]), [empty])
+            self.assertEqual(utils.parseaddr([address]), empty)
 
     @contextlib.contextmanager
     def _email_strict_parsing_conf(self):
