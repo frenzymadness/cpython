@@ -44,7 +44,7 @@ from email import iterators
 from email import base64mime
 from email import quoprimime
 
-from test.support import unlink, start_threads, EnvironmentVarGuard
+from test.support import unlink, start_threads, EnvironmentVarGuard, swap_attr
 from test.test_email import openfile, TestEmailBase
 
 # These imports are documented to work, but we are testing them using a
@@ -3362,18 +3362,14 @@ Foo
     @contextlib.contextmanager
     def _email_strict_parsing_conf(self):
         """Context for the given email strict parsing configured in config file"""
-        old_filename = utils._EMAIL_CONFIG_FILE
-
-        try:
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                filename = os.path.join(tmpdirname, 'conf.cfg')
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            filename = os.path.join(tmpdirname, 'conf.cfg')
+            with swap_attr(utils, "_EMAIL_CONFIG_FILE", filename):
                 with open(filename, 'w') as file:
                     file.write('[email_addr_parsing]\n')
                     file.write('PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING = true')
                 utils._EMAIL_CONFIG_FILE = filename
                 yield
-        finally:
-            utils._EMAIL_CONFIG_FILE = old_filename
 
     def test_parsing_errors_strict_disabled_via_config_file(self):
         address = 'alice@example.org )Alice('
