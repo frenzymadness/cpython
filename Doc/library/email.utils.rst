@@ -69,6 +69,19 @@ of the new API.
 
    If *strict* is true, use a strict parser which rejects malformed inputs.
 
+   The default setting for *strict* is set to ``True``, but you can override
+   it by setting the environment variable ``PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING``
+   to non-empty string.
+
+   Additionally, you can permanently set the default value for *strict* to
+   ``False`` by creating the configuration file ``/etc/python/email.cfg``
+   with the following content:
+
+   .. code-block:: ini
+
+      [email_addr_parsing]
+      PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING = true
+
    .. versionchanged:: 3.13
       Add *strict* optional parameter and reject malformed inputs by default.
 
@@ -96,6 +109,19 @@ of the new API.
    :meth:`Message.get_all <email.message.Message.get_all>`.
 
    If *strict* is true, use a strict parser which rejects malformed inputs.
+
+   The default setting for *strict* is set to ``True``, but you can override
+   it by setting the environment variable ``PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING``
+   to non-empty string.
+
+   Additionally, you can permanently set the default value for *strict* to
+   ``False`` by creating the configuration file ``/etc/python/email.cfg``
+   with the following content:
+
+   .. code-block:: ini
+
+      [email_addr_parsing]
+      PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING = true
 
    Here's a simple example that gets all the recipients of a message::
 
