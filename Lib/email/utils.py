@@ -49,43 +49,44 @@ specialsre = re.compile(r'[][\\()<>@,:;".]')
 escapesre = re.compile(r'[\\"]')
 
 _EMAIL_CONFIG_FILE = "/etc/python/email.cfg"
+_cached_strict_addr_parsing = None
 
 
 def _use_strict_email_parsing():
+    """"Cache implementation for _cached_strict_addr_parsing"""
+    global _cached_strict_addr_parsing
+    if _cached_strict_addr_parsing is None:
+        _cached_strict_addr_parsing = _use_strict_email_parsing_impl()
+    return _cached_strict_addr_parsing
+
+
+def _use_strict_email_parsing_impl():
     """Returns True if strict email parsing is not disabled by
     config file or env variable.
     """
-    global _cached_strict_addr_parsing
+    disabled = bool(os.environ.get("PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING"))
+    if disabled:
+        return False
 
     try:
-        return _cached_strict_addr_parsing
-    except NameError:
-        disabled = bool(os.environ.get("PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING"))
-        if disabled:
-            _cached_strict_addr_parsing = False
-            return _cached_strict_addr_parsing
+        file = open(_EMAIL_CONFIG_FILE)
+    except FileNotFoundError:
+        pass
+    else:
+        with file:
+            import configparser
+            config = configparser.ConfigParser(
+                interpolation=None,
+                comment_prefixes=('#', ),
 
-        try:
-            file = open(_EMAIL_CONFIG_FILE)
-        except FileNotFoundError:
-            pass
-        else:
-            with file:
-                import configparser
-                config = configparser.ConfigParser(
-                    interpolation=None,
-                    comment_prefixes=('#', ),
+            )
+            config.read_file(file)
+            disabled = config.getboolean('email_addr_parsing', "PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING", fallback=None)
 
-                )
-                config.read_file(file)
-                disabled = config.getboolean('email_addr_parsing', "PYTHON_EMAIL_DISABLE_STRICT_ADDR_PARSING", fallback=None)
+    if disabled:
+        return False
 
-        if disabled:
-            _cached_strict_addr_parsing = False
-            return _cached_strict_addr_parsing
-
-        _cached_strict_addr_parsing = True
-        return _cached_strict_addr_parsing
+    return True
 
 
 def _has_surrogates(s):

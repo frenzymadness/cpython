@@ -3320,12 +3320,9 @@ Foo
         address = 'alice@example.org )Alice('
         empty = ('', '')
 
-        # Delete cached default value to make the function
-        # reload the environment variable provided below.
-        try:
-            del utils._cached_strict_addr_parsing
-        except AttributeError:
-            pass
+        # Reset cached default value to make the function
+        # reload the config file provided below.
+        utils._cached_strict_addr_parsing = None
 
         # Strict disabled via env variable, old behavior expected
         with EnvironmentVarGuard() as environ:
@@ -3336,20 +3333,14 @@ Foo
             self.assertEqual(utils.parseaddr([address]), ('', address))
 
         # Clear cache again
-        try:
-            del utils._cached_strict_addr_parsing
-        except AttributeError:
-            pass
+        utils._cached_strict_addr_parsing = None
 
         # Default strict=True, empty result expected
         self.assertEqual(utils.getaddresses([address]), [empty])
         self.assertEqual(utils.parseaddr([address]), empty)
 
         # Clear cache again
-        try:
-            del utils._cached_strict_addr_parsing
-        except AttributeError:
-            pass
+        utils._cached_strict_addr_parsing = None
 
         # Empty string in env variable = strict parsing enabled (default)
         with EnvironmentVarGuard() as environ:
@@ -3375,12 +3366,9 @@ Foo
         address = 'alice@example.org )Alice('
         empty = ('', '')
 
-        # Delete cached default value to make the function
+        # Reset cached default value to make the function
         # reload the config file provided below.
-        try:
-            del utils._cached_strict_addr_parsing
-        except AttributeError:
-            pass
+        utils._cached_strict_addr_parsing = None
 
         # Strict disabled via config file, old results expected
         with self._email_strict_parsing_conf():
@@ -3389,10 +3377,7 @@ Foo
             self.assertEqual(utils.parseaddr([address]), ('', address))
 
         # Clear cache again
-        try:
-            del utils._cached_strict_addr_parsing
-        except AttributeError:
-            pass
+        utils._cached_strict_addr_parsing = None
 
         # Default strict=True, empty result expected
         self.assertEqual(utils.getaddresses([address]), [empty])
